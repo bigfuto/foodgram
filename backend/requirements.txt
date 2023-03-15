@@ -2,4 +2,3 @@ Django=4.1.7
 djangorestframework=3.14.0
 django-cors-headers=3.14.0
 Pillow=9.4.0
-django-filter=22.1
