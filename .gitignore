@@ -124,9 +124,16 @@ venv.bak/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+mypy.ini
 
 # Pyre type checker
 .pyre/
 
 # .idea
 .idea
+
+# .vcode/
+
+# staticfiles
+static/
+media/
