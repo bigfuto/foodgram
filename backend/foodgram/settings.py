@@ -26,9 +26,9 @@ SECRET_KEY = 'django-insecure-u4&5bp7&$w^#wjxb#^m*(v_%)&j*nlxzg&j_#b6)(9-0vwxmd6
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*', 'localhost']
-CSRF_TRUSTED_ORIGINS = ['http://localhost']
-CORS_ORIGIN_WHITELIST = ['http://localhost']
+ALLOWED_HOSTS = ['*', 'yapractlesson.zapto.org']
+CSRF_TRUSTED_ORIGINS = ['http://yapractlesson.zapto.org']
+CORS_ORIGIN_WHITELIST = ['http://yapractlesson.zapto.org']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
