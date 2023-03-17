@@ -30,8 +30,12 @@ class RecipeAdmin(admin.ModelAdmin):
     def count_favorites(self, obj):
         return obj.favorites.count()
 
+    count_favorites.short_description = 'В избранном'
+
     def picture(self, obj):
         return mark_safe(f'<img src={obj.image.url} width="80" hieght="80"')
+
+    picture.short_description = 'Изображение'
 
 
 class IngredientAdmin(admin.ModelAdmin):
