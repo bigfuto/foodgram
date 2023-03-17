@@ -1,6 +1,7 @@
-from django.db import models
-from django.core.validators import MinValueValidator
 from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator
+from django.db import models
+from django.db.models import Exists, OuterRef, Value
 
 User = get_user_model()
 
@@ -46,12 +47,38 @@ class Tag(models.Model):
         return self.name
 
 
+class RecipQuerySet(models.QuerySet):
+    def annotate_quryset(self, user):
+        return self.annotate(
+            is_favorited=Exists(Favorites.objects.filter(
+                recipe__id=OuterRef('id'),
+                user=user,
+            )) if user.is_authenticated else Value(False),
+            is_in_shopping_cart=Exists(ShoppingCart.objects.filter(
+                recipe__id=OuterRef('id'),
+                user=user,
+            )) if user.is_authenticated else Value(False)
+        )
+
+
 class Recipe(models.Model):
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='recipes',
         verbose_name='Автор'
+    )
+    tags = models.ManyToManyField(
+        Tag,
+        related_name='recipes',
+        verbose_name='Теги',
+    )
+    ingredients = models.ManyToManyField(
+        Ingredient,
+        through='IngredientInRecipe',
+        through_fields=('recipe', 'ingredient'),
+        related_name='recipes',
+        verbose_name='Ингредиенты'
     )
     name = models.CharField(max_length=200, blank=False, verbose_name='Рецепт')
     text = models.TextField(blank=False, verbose_name='Описание рецепта')
@@ -62,17 +89,11 @@ class Recipe(models.Model):
         ),
         verbose_name='Время приготовления',
     )
-    tags = models.ManyToManyField(Tag, verbose_name='Теги')
-    ingredients = models.ManyToManyField(
-        Ingredient,
-        through='IngredientInRecipe',
-        through_fields=('recipe', 'ingredient'),
-        verbose_name='Ингредиенты'
-    )
     pub_date = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Дата публикации',
     )
+    objects = RecipQuerySet.as_manager()
 
     class Meta():
         ordering = ('-pub_date',)
@@ -122,11 +143,13 @@ class Favorites(models.Model):
         User,
         on_delete=models.CASCADE,
         related_name='favorites',
+        verbose_name='Пользователь',
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
         related_name='favorites',
+        verbose_name='Рецепт',
     )
 
     class Meta():
@@ -148,10 +171,12 @@ class ShoppingCart(models.Model):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE,
         related_name='shopping_cart',
+        verbose_name='Пользователь',
     )
     recipe = models.ForeignKey(
         Recipe, on_delete=models.CASCADE,
         related_name='shopping_cart',
+        verbose_name='Рецепт',
     )
 
     class Meta():

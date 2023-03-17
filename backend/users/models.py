@@ -1,18 +1,19 @@
-from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
 class User(AbstractUser):
-    first_name = models.CharField(_('first name'), max_length=150, blank=False)
-    last_name = models.CharField(_('last name'), max_length=150, blank=False)
-    email = models.EmailField(_('email address'), unique=True)
     subscribers = models.ManyToManyField(
         to='self',
         through='Subscription',
         symmetrical=False,
+        related_name='subscription_users',
         verbose_name='Подписки'
     )
+    first_name = models.CharField(_('first name'), max_length=150, blank=False)
+    last_name = models.CharField(_('last name'), max_length=150, blank=False)
+    email = models.EmailField(_('email address'), unique=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
@@ -43,6 +44,10 @@ class Subscription(models.Model):
             models.UniqueConstraint(
                 fields=['author', 'subscriber'],
                 name='unique_user_subscriber'
+            ),
+            models.CheckConstraint(
+                check=models.Q(author=models.F('subscriber')),
+                name='check_equal_author_subscriber'
             )
         ]
 

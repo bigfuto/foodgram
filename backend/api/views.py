@@ -1,39 +1,21 @@
+from django.conf import settings
 from django.contrib.auth import authenticate
-from rest_framework import status, permissions, viewsets, mixins
+from django.db.models import Sum
 from django.http import HttpResponse
-# from rest_framework.request import Request
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.validators import ValidationError
-from django.db.models import Exists, OuterRef, Value, Sum
+from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
-from django.conf import settings
-from .pagination import RecipePagination
+from rest_framework.response import Response
+from rest_framework.validators import ValidationError
+from rest_framework.views import APIView
+
+from api import serializers
+from recipes import models
 from users.models import Subscription, User
+
+from .filters import recipe_queryset_fiter
+from .pagination import RecipePagination
 from .permissions import IsAuthorOrReadOnly
-from recipes.models import (
-    Tag,
-    Ingredient,
-    Recipe,
-    Favorites,
-    ShoppingCart,
-    IngredientInRecipe
-)
-from .serializers import (
-    SignUpSerializer,
-    UserSerializer,
-    PasswordSerializer,
-    SubscribeSerializer,
-    UserSubscribeSerializer,
-    TagSerializer,
-    IngridientsSerializer,
-    RecipeSerializer,
-    FavoriteSerializer,
-    RecipeFavoriteCartSerializer,
-    ShoppingCartSerializer,
-    RecipeCreateUpdateSerializer
-)
 
 
 class LoginView(APIView):
@@ -48,8 +30,7 @@ class LoginView(APIView):
                 Token.objects.create(user=user)
             response = {'auth_token': user.auth_token.key}
             return Response(data=response, status=status.HTTP_201_CREATED)
-        else:
-            return Response(data={'message': 'Неверный email или пароль'})
+        return Response(data={'message': 'Неверный email или пароль'})
 
 
 class LogoutView(APIView):
@@ -60,8 +41,7 @@ class LogoutView(APIView):
         if user is not None:
             request.user.auth_token.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        else:
-            return Response(data={'message': 'Пользователь не авторизван'})
+        return Response(data={'message': 'Пользователь не авторизван'})
 
 
 class UserViewSet(
@@ -81,8 +61,8 @@ class UserViewSet(
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
-            return SignUpSerializer
-        return UserSerializer
+            return serializers.SignUpSerializer
+        return serializers.UserSerializer
 
     @action(detail=False, methods=['get'])
     def me(self, request):
@@ -91,7 +71,7 @@ class UserViewSet(
 
     @action(detail=False, methods=['post'])
     def set_password(self, request):
-        serializer = PasswordSerializer(data=request.data)
+        serializer = serializers.PasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = request.user
         if user.check_password(serializer.data.get('current_password')):
@@ -109,13 +89,11 @@ class UserViewSet(
         data = {'author': pk, 'subscriber': request.user.id}
         author = User.objects.filter(pk=pk).first()
         subscriber = request.user
-        print(request.method)
         if request.method == 'POST':
-            print(data)
-            serializer = SubscribeSerializer(data=data)
+            serializer = serializers.SubscribeSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            serializer = UserSerializer(
+            serializer = serializers.UserSerializer(
                 instance=author, context={'request': request}
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -141,7 +119,7 @@ class UserViewSet(
             author__subscriber=request.user
         ).all()
         page = self.paginate_queryset(queryset=queryset)
-        serializer = UserSubscribeSerializer(
+        serializer = serializers.UserSubscribeSerializer(
             page,
             context=context,
             many=True
@@ -150,18 +128,18 @@ class UserViewSet(
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Tag.objects.all()
-    serializer_class = TagSerializer
+    queryset = models.Tag.objects.all()
+    serializer_class = serializers.TagSerializer
     pagination_class = None
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Ingredient.objects.all()
-    serializer_class = IngridientsSerializer
+    queryset = models.Ingredient.objects.all()
+    serializer_class = serializers.IngridientsSerializer
     pagination_class = None
 
     def get_queryset(self):
-        queryset = Ingredient.objects
+        queryset = models.Ingredient.objects
         name = self.request.query_params.get('name')
         if name:
             queryset = queryset.filter(name__istartswith=name)
@@ -184,36 +162,19 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.action == 'shopping_cart':
-            return ShoppingCartSerializer
+            return serializers.ShoppingCartSerializer
         if self.action == 'favorite':
-            return FavoriteSerializer
+            return serializers.FavoriteSerializer
         if self.request.method in ('POST', 'PATCH'):
-            return RecipeCreateUpdateSerializer
-        return RecipeSerializer
+            return serializers.RecipeCreateUpdateSerializer
+        return serializers.RecipeSerializer
 
     def get_queryset(self):
         user = self.request.user
-        tags = self.request.query_params.getlist('tags')
-        author = self.request.query_params.get('author')
-        queryset = Recipe.objects.select_related('author').prefetch_related(
-            'tags', 'ingredients').annotate(
-                is_favorited=Exists(Favorites.objects.filter(
-                    recipe__id=OuterRef('id'),
-                    user=user,
-                )) if user.is_authenticated else Value(False),
-                is_in_shopping_cart=Exists(ShoppingCart.objects.filter(
-                    recipe__id=OuterRef('id'),
-                    user=user,
-                )) if user.is_authenticated else Value(False)
-        )
-        if tags:
-            queryset = queryset.filter(tags__slug__in=tags).distinct()
-        if self.request.query_params.get('is_in_shopping_cart'):
-            queryset = queryset.filter(is_in_shopping_cart=True)
-        if self.request.query_params.get('is_favorited'):
-            queryset = queryset.filter(is_favorited=True)
-        if author:
-            queryset = queryset.filter(author=author)
+        queryset = models.Recipe.objects.select_related(
+            'author').prefetch_related('tags', 'ingredients')
+        queryset = queryset.annotate_quryset(user)
+        queryset = recipe_queryset_fiter(queryset, self.request)
         return queryset
 
     def perform_create(self, serializer):
@@ -221,22 +182,24 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post', 'delete'])
     def shopping_cart(self, request, pk=None):
-        return self._shopping_cart_favoite(pk, ShoppingCart)
+        return self._shopping_cart_favoite(pk, models.ShoppingCart)
 
     @action(detail=True, methods=['post', 'delete'])
     def favorite(self, request, pk=None):
-        return self._shopping_cart_favoite(pk, Favorites)
+        return self._shopping_cart_favoite(pk, models.Favorites)
 
     def _shopping_cart_favoite(self, pk, Klass):
         data = {'recipe': pk, 'user': self.request.user.id}
-        item = Recipe.objects.filter(pk=data['recipe']).first()
+        item = models.Recipe.objects.filter(pk=data['recipe']).first()
         user = self.request.user
         if self.request.method == 'POST':
             serializer = self.get_serializer(data=data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(
-                data=RecipeFavoriteCartSerializer(instance=item).data,
+                data=serializers.RecipeFavoriteCartSerializer(
+                    instance=item
+                ).data,
                 status=status.HTTP_201_CREATED
             )
         elif self.request.method == 'DELETE':
@@ -247,7 +210,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def download_shopping_cart(self, request):
         name = 'ingredient__name'
         unit = 'ingredient__measurement_unit'
-        ingredients = IngredientInRecipe.objects.select_related(
+        ingredients = models.IngredientInRecipe.objects.select_related(
             'recipe',
             'ingredient',
         ).filter(recipe__shopping_cart__user=request.user)

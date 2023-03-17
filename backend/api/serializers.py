@@ -1,16 +1,14 @@
+import re
+
+from django.db import transaction
 from rest_framework import serializers
 from rest_framework.validators import ValidationError
-from django.db import transaction
+
+from recipes.models import (Favorites, Ingredient, IngredientInRecipe, Recipe,
+                            ShoppingCart, Tag)
+from users.models import Subscription, User
+
 from .utils import Base64ImageField
-from users.models import User, Subscription
-from recipes.models import (
-    Tag,
-    Ingredient,
-    Recipe,
-    ShoppingCart,
-    Favorites,
-    IngredientInRecipe
-)
 
 
 class SignUpSerializer(serializers.ModelSerializer):
@@ -24,6 +22,22 @@ class SignUpSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
         ]
+
+    def validate_username(self, value):
+        clear_data = re.findall(r"[^\w.@+-]+\Z", value)
+        if clear_data:
+            raise ValidationError(
+                f'"{clear_data}"  - недопустимые символы для username'
+            )
+        return value
+
+    def validate_email(self, value):
+        clear_data = re.findall(r"[!#$%&'*+/=?^_`{}]+\Z", value)
+        if clear_data:
+            raise ValidationError(
+                f'"{clear_data}"  - недопустимые символы для email'
+            )
+        return value
 
     def validate(self, data):
         email_exists = User.objects.filter(email=data["email"]).exists()
