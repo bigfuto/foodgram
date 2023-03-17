@@ -9,7 +9,7 @@ services:
       - ./.env
 
   backend:
-    build: ../backend/
+    image: bigfut/foodgram-backend:latest
     restart: always
     volumes:
       - static_value:/app/static/
@@ -18,7 +18,7 @@ services:
       - ./.env
 
   frontend:
-    build: ../frontend/
+    image: bigfut/foodgram-frontend:latest
     volumes:
       - ../frontend/:/app/result_build/
     depends_on:
