@@ -24,10 +24,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-u4&5bp7&$w^#wjxb#^m*(v_%)&j*nlxzg&j_#b6)(9-0vwxmd6'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 
-ALLOWED_HOSTS = ['*', 'yapractlesson.zapto.org']
+ALLOWED_HOSTS = ['*', 'yapractlesson.zapto.org', '84.201.142.121', '127.0.0.1']
 CSRF_TRUSTED_ORIGINS = ['http://yapractlesson.zapto.org']
 CORS_ORIGIN_WHITELIST = ['http://yapractlesson.zapto.org']
 
