@@ -56,7 +56,7 @@ class UserViewSet(
         if self.action in ('me', 'set_password', 'subscribe', 'subscriptions'):
             return [permissions.IsAuthenticated()]
         if self.action == 'destroy':
-            return [IsAuthorOrReadOnly]
+            return [IsAuthorOrReadOnly()]
         return super().get_permissions()
 
     def get_serializer_class(self):
@@ -157,7 +157,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         ):
             return [permissions.IsAuthenticated()]
         if self.action == 'destroy':
-            return [IsAuthorOrReadOnly]
+            return [IsAuthorOrReadOnly()]
         return super().get_permissions()
 
     def get_serializer_class(self):

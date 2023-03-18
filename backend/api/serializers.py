@@ -2,7 +2,6 @@ import re
 
 from django.db import transaction
 from rest_framework import serializers
-from rest_framework.validators import ValidationError
 
 from recipes.models import (Favorites, Ingredient, IngredientInRecipe, Recipe,
                             ShoppingCart, Tag)
@@ -26,7 +25,7 @@ class SignUpSerializer(serializers.ModelSerializer):
     def validate_username(self, value):
         clear_data = re.findall(r"[^\w.@+-]+\Z", value)
         if clear_data:
-            raise ValidationError(
+            raise serializers.ValidationError(
                 f'"{clear_data}"  - недопустимые символы для username'
             )
         return value
@@ -34,7 +33,7 @@ class SignUpSerializer(serializers.ModelSerializer):
     def validate_email(self, value):
         clear_data = re.findall(r"[!#$%&'*+/=?^_`{}]+\Z", value)
         if clear_data:
-            raise ValidationError(
+            raise serializers.ValidationError(
                 f'"{clear_data}"  - недопустимые символы для email'
             )
         return value
@@ -42,7 +41,8 @@ class SignUpSerializer(serializers.ModelSerializer):
     def validate(self, data):
         email_exists = User.objects.filter(email=data["email"]).exists()
         if email_exists:
-            raise ValidationError('С этим email уже существует пользователь')
+            raise serializers.ValidationError(
+                'С этим email уже существует пользователь')
         return super().validate(data)
 
     def create(self, validated_data):
