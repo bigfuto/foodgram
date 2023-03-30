@@ -27,9 +27,9 @@ SECRET_KEY = 'django-insecure-u4&5bp7&$w^#wjxb#^m*(v_%)&j*nlxzg&j_#b6)(9-0vwxmd6
 DEBUG = False
 
 
-ALLOWED_HOSTS = ['*', 'yapractlesson.zapto.org', '84.201.142.121', '127.0.0.1']
-CSRF_TRUSTED_ORIGINS = ['http://yapractlesson.zapto.org']
-CORS_ORIGIN_WHITELIST = ['http://yapractlesson.zapto.org']
+ALLOWED_HOSTS = ['*', '127.0.0.1', 'http://localhost/']
+CSRF_TRUSTED_ORIGINS = ['http://localhost']
+CORS_ORIGIN_WHITELIST = ['http://localhost']
 
 # Application definition
 
@@ -79,17 +79,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'foodgram.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
 
 
 DATABASES = {
@@ -174,6 +163,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # CORS
+
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_URLS_REGEX = r'^/api/.*$'

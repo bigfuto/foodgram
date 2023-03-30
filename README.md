@@ -4,13 +4,15 @@
 
 
 **Описание**  
-«Продуктовый помощник»: сайт, на котором пользователи будут публиковать рецепты, добавлять чужие рецепты в избранное и подписываться на публикации других авторов. Сервис «Список покупок» позволит пользователям создавать список продуктов, которые нужно купить для приготовления выбранных блюд.
+Backend для сайта «Продуктовый помощник» (React), на котором пользователи будут публиковать рецепты, добавлять чужие рецепты в избранное и подписываться на публикации других авторов. Сервис «Список покупок» позволит пользователям создавать список продуктов, которые нужно купить для приготовления выбранных блюд.
 
 **Технологии:**  
 - [Python](https://www.python.org/doc/) 
 - [Django](https://docs.djangoproject.com/en/4.1/releases/)
 - [Django REST framework](https://www.django-rest-framework.org/)
 - [Docker](https://www.docker.com/)
+- [Nginx](https://nginx.org/)
+- [PostgreSQL](https://www.postgresql.org/)
 
 
 ---
@@ -42,15 +44,15 @@
     ```  
 - **Применяем миграции:**  
     ```bash
-    docker-compose exec web python manage.py migrate
+    docker-compose exec backend python manage.py migrate
     ```
 - **Собираем статику:**  
     ```bash
-    docker-compose exec web python manage.py collectstatic --no-input 
+    docker-compose exec backend python manage.py collectstatic --no-input 
     ```
 - **Создаем суперпользователя:**  
     ```bash
-    docker-compose exec web python manage.py createsuperuser
+    docker-compose exec backend python manage.py createsuperuser
     ```
 **Проект доступен по адресу:**  
 ```bash
@@ -60,12 +62,6 @@ http://localhost/
 ```bash
 http://localhost/admin/ 
 ```
-**Демо:**
-**[http://yapractlesson.zapto.org/](http://yapractlesson.zapto.org/)**
-
-- **Админка:**
-***email:*** `super@us.er`
-***password:*** `superuser`
 
 **Остановка проекта:**
 - **С сохранением данных:**
@@ -81,8 +77,8 @@ http://localhost/admin/
 ---
 ## Документация API:  
 
-Полный список возможных запросов к API можно посмотреть вот по этому адресу: **http://localhost/api/docs/**
+Полный список возможных запросов к API можно посмотреть по этому адресу: **http://localhost/api/docs/**
 
 ---
 
-:railway_car:[**Иванов Илья**](https://github.com/bigfuto)  
+[Иванов Илья](https://github.com/bigfuto) в рамках курса Яндекс.Практикума
